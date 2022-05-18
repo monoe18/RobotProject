@@ -1,0 +1,6 @@
+Motor	KEYWORD1
+MoveSteps	KEYWORD2
+setSpeed	KEYWORD2
+getSpeed	KEYWORD2
+TurnCounterClockwise	KEYWORD2
+TurnClockwise	KEYWORD2
