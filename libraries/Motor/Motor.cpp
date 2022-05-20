@@ -12,7 +12,15 @@ Motor::Motor(int hallA, int hallB, int motorPWM, int hBridgeA, int hBridgeB, flo
   _hBridgeA = hBridgeA;
   _hBridgeB = hBridgeB;
   _stepDist = 0.12f;
-  
+  last_p = 0;
+  last_i = 0;
+  //iteration_time = 10000;
+
+  //Bias 
+  Kp = 0.175;
+  Ki = 0.0001;
+  Kd = 0;
+
   
   pinMode(_motorPWM, OUTPUT);
   pinMode(_hBridgeA, OUTPUT);
@@ -39,14 +47,17 @@ bool Motor::CheckSteps(){
     _steps=0;
   }
 }
-int Motor::moveTo(float x, float y){
+//public
+int Motor::setTarget(float x, float y){
+  last_p = 0;
+  last_i = 0;
   _steps = 0;
   float _x = x;
   float _y = y;
   if(_clockwiseWind == false){
     _x = stepCalc._xTotal-x;
   }
-  int targetSteps = stepCalc.calcSteps(_x, _y);
+  targetSteps = stepCalc.calcSteps(_x, _y);
   _diffSteps = stepDiff(targetSteps);
   return _diffSteps;
 }
@@ -86,20 +97,50 @@ int Motor::absolute(int value){
   return _value;
 }
 
-bool Motor::MoveSteps(int steps){
+bool Motor::MoveSteps(int targetSteps){
   if(_state[0] != digitalRead(_hallA) || _state[1]!= digitalRead(_hallB)){
     _state[0] = digitalRead(_hallA);
     _state[1] = digitalRead(_hallB);
     _steps +=1;
   }
   //CheckSteps();
-  if(_steps>=steps){
+  if(_steps>=targetSteps){
     analogWrite(_motorPWM, 0);
     return true;
-  } else{
-    analogWrite(_motorPWM, _speed);
   }
   return false;
+}
+
+int Motor::calcPID(float interval){
+
+float error = targetSteps - _steps;
+float P = error * Kp;
+float I = last_i + error * Ki * interval;
+//float D = P - last_p;
+//
+
+int PID = P + I;
+
+Serial.print(P);
+Serial.print(",");
+Serial.print(I);
+Serial.print(",");
+Serial.print(PID);
+Serial.print("\n");
+
+//Clamp PID value between 0 and 255
+if (PID > 255){
+    PID = 255;
+}
+else if (PID < 0){
+    PID = 0;
+}
+
+//Update the values for next iteration
+//last_p = P;
+last_i = I;
+analogWrite(_motorPWM, PID);
+return PID;
 }
 
 void Motor::setSpeed(int speed){

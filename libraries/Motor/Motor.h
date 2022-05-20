@@ -8,16 +8,26 @@ class Motor
 {
   public:
     Motor(int hallA, int hallB, int motorPWM, int hBridgeA, int hBridgeB, float x, float y, bool wind);
-    int moveTo(float x, float y);
+    int setTarget(float x, float y);
     bool move();
     void setSpeed(int speed);
     int getSpeed();
     void TurnCounterClockwise();
     void TurnClockwise();
+    int calcPID(float interval);
   private:
-    bool MoveSteps(int steps);
+    bool MoveSteps(int targetSteps);
     int _steps;
     int _rounds;
+    int targetSteps;
+    float last_p;
+  float last_i;
+  float iteration_time;
+
+  //Bias 
+  float Kp;
+  float Ki;
+  float Kd;
     int _speed;
     int _state [2];
     int _hallA;
